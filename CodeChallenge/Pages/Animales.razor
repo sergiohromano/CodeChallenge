@@ -1,0 +1,82 @@
+﻿@page "/animales"
+@inject CodeChallenge.Data.ZoologicoServicio _zoologicoServicio
+
+<h1>Animales</h1>
+
+<NavLink class="btn btn-primary mb-2" href="nuevoAnimal">
+    <span class="oi oi-plus" aria-hidden="true"></span> Nuevo
+</NavLink>
+<table id="myTable" class="table" cellspacing="0">
+    <thead>
+        <tr>
+            @foreach (var property in animales.GetType().GetGenericArguments()[0].GetProperties())
+            {
+                <th>@string.Concat(property.Name.Select(x => Char.IsUpper(x) ? " " + x : x.ToString())).TrimStart(' ')</th>
+            }
+            <th>Carne al Mes (Kg)</th>
+            <th>Hierba al Mes (Kg)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            double totalCarne = 0D;
+            double totalHierba = 0D;
+        }
+        @foreach (var item in animales)
+        {
+            <tr>
+                @foreach (var property in item.GetType().GetProperties())
+                {
+                    @if (property.PropertyType.Name == "DateTime")
+                    {
+
+                        <td>@(((DateTime) property.GetValue(item)).ToShortDateString())</td>
+                    }
+                    else
+                    {
+                        <td>@property.GetValue(item)</td>
+
+                    }
+
+                }
+                @{ 
+                    var subTotalCarne = item.CalcularAlimentoCarneMensual(DateTime.Now);
+                    var subTotalHierba = item.CalcularAlimentoHierbaMensual(DateTime.Now);
+                    totalCarne += subTotalCarne;
+                    totalHierba += subTotalHierba;
+                }
+                <td>@subTotalCarne.ToString("N3")</td>
+                <td>@subTotalHierba.ToString("N3")</td>
+            </tr>
+        }
+    <tr>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td><strong>TOTAL</strong></td>
+        <td><strong>@totalCarne.ToString("N3")</strong></td>
+        <td><strong>@totalHierba.ToString("N3")</strong></td>
+    </tr>
+    </tbody>
+</table>
+
+@code {
+    protected List<CodeChallenge.Data.Model.Animal> animales = null;
+
+    private List<CodeChallenge.Data.Model.Animal> obtenerAnimales()
+    {
+        return _zoologicoServicio._animales;
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        animales = obtenerAnimales();
+        return base.OnInitializedAsync();
+    }
+}

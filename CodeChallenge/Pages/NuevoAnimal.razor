@@ -1,0 +1,171 @@
+﻿@page "/nuevoAnimal"
+@inject CodeChallenge.Data.ZoologicoServicio _zoologicoServicio
+@inject NavigationManager NavManager
+
+
+<h3>Nuevo Animal</h3>
+<EditForm Model="@animal" OnValidSubmit="Agregar">
+    <div class="form-group row justify-content-center">
+        <div class="col-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Tipo</label>
+                        </div>
+                        <div class="col-4">
+                            <select @bind="tipo" class="form-control">
+                                <option value="">-- Seleccionar Tipo --</option>
+                                @foreach (var tipo in _tipos)
+                                {
+                                    <option value="@tipo">@tipo</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Fecha de Ingreso</label>
+                        </div>
+                        <div class="col-4">
+                            <InputDate class="form-control" @bind-Value="animal.FechaDeIngreso" @bind-Value:format="dd/MM/yyyy"></InputDate>
+                        </div>
+                    </div>
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Especie</label>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" class="form-control" @bind="animal.Especie" />
+                        </div>
+                    </div>
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Edad</label>
+                        </div>
+                        <div class="col-4">
+                            <input type="number" class="form-control" @bind="animal.Edad" />
+                        </div>
+                    </div>
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Lugar de Origen</label>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" class="form-control" @bind="animal.LugarOrigen" />
+                        </div>
+                    </div>
+                    <div class="form-group row justify-content-center">
+                        <div class="col-2">
+                            <label class="col-form-label">Peso</label>
+                        </div>
+                        <div class="col-4">
+                            <input type="number" class="form-control" @bind="animal.Peso" />
+                        </div>
+                    </div>
+                    @if (tipo == "Carnívoro" || tipo == "Reptil")
+                    {
+
+                        <div class="form-group row justify-content-center">
+                            <div class="col-2">
+                                <label class="col-form-label">Porcentaje Carne</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" max="1" @bind="animal.PorcentajeCarne" />
+                            </div>
+                        </div>
+                    }
+                    @if (tipo == "Herbívoro")
+                    {
+
+                        <div class="form-group row justify-content-center">
+                            <div class="col-2">
+                                <label class="col-form-label">Kilos</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" @bind="animal.Kilos" />
+                            </div>
+                        </div>
+                    }
+                    @if (tipo == "Reptil")
+                    {
+                        <div class="form-group row justify-content-center">
+                            <div class="col-2">
+                                <label class="col-form-label">Porcentaje Hierba</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" max="1" @bind="animal.PorcentajeHierba" />
+                            </div>
+                        </div>
+                        <div class="form-group row justify-content-center">
+                            <div class="col-2">
+                                <label class="col-form-label">Cambio de Piel</label>
+                            </div>
+                            <div class="col-4">
+                                <input type="number" class="form-control" @bind="animal.CambioDePiel" />
+                            </div>
+                        </div>
+                    }
+                    @if (advertencia)
+                    {
+                <div class="alert alert-warning" role="alert">
+                    Si se agrega el animal va a exceder los 1500 kilos de comida mensual
+                </div>
+                    }
+                    <div class="form-group row">
+                        <div class="col-12 d-flex justify-content-center">
+                            <button type="button" class="btn btn-success" @onclick="Agregar">Agregar</button>
+                            <button type="button" class="btn btn-danger ml-4" @onclick="Cancelar">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</EditForm>
+    @code {
+        private List<string> _tipos;
+        private bool advertencia = false;
+        private double comidaTotal = 0D;
+        private string tipo;
+
+        protected DateTime fechaDeIngreso = DateTime.Now.Date;
+        private CodeChallenge.Data.Model.Animal animal = new Data.Model.Animal();
+
+        private void Agregar()
+        {
+            switch (tipo)
+            {
+                case "Carnívoro":
+                    animal = new CodeChallenge.Data.Model.Carnivoro(animal);
+                    break;
+                case "Herbívoro":
+                    animal = new CodeChallenge.Data.Model.Herbivoro(animal);
+                    break;
+                case "Reptil":
+                    animal = new CodeChallenge.Data.Model.Reptil(animal);
+                    break;
+                default:
+                    break;
+            }
+            if (advertencia || comidaTotal + animal.CalcularAlimentoCarneMensual(DateTime.Now.Date)
+                + animal.CalcularAlimentoHierbaMensual(DateTime.Now.Date) <= 1500)
+            {
+                _zoologicoServicio.AgregarAnimal(animal);
+                NavManager.NavigateTo("animales");
+            }
+            else advertencia = true;
+        }
+        private void Cancelar()
+        {
+            NavManager.NavigateTo("animales");
+        }
+
+        protected override Task OnInitializedAsync()
+        {
+            _tipos = _zoologicoServicio.TiposAnimales;
+            comidaTotal = _zoologicoServicio.CalcularTotalComidaMensual(DateTime.Now.Date);
+            return base.OnInitializedAsync();
+        }
+    }
